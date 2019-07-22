@@ -1,0 +1,32 @@
+{
+    "name": "s1mpletru1h/events",
+    "description": "Events - the foundation of everything.",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/s1mpletru1h/php-events/issues",
+        "source": "https://github.com/s1mpletru1h/php-events/"
+    },
+    "keywords": ["pubsub", "events", "binding", "logging"],
+    "authors": [
+        {
+            "name": "Matthew Piskorz",
+            "email": "matthew@matthewpiskorz.com"
+        }
+    ],
+    "config": {
+        "platform": {
+            "php": "7.0"
+        }
+    },
+    "require": {
+        "php": ">=7.0.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~6.0"
+    },
+    "autoload": {
+        "classmap": [
+            "src/"
+        ]
+    }
+}
