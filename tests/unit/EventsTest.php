@@ -113,7 +113,7 @@ class EventsTest extends TestCase
     }
 
     /**
-     * @covers \Services\Events\Events::sub
+     * @covers \Services\Events\Events::unsub
      */
     public function testUnsub()
     {
@@ -127,7 +127,7 @@ class EventsTest extends TestCase
     }
 
     /**
-     * @covers \Services\Events\Events::sub
+     * @covers \Services\Events\Events::reset
      */
     public function testReset()
     {
@@ -139,6 +139,27 @@ class EventsTest extends TestCase
         // assert
         $this->assertEmpty(array_keys($GLOBALS['SUBSCRIBERS']));
     }
+
+    /**
+     * @covers \Services\Events\Events::didOccur
+     */
+    public function testDidOccur()
+    {
+        // arrange
+        $events = ['I_HAPPENED', 'EVERYTHING_ELSE_HAPPENED'];
+        // act
+        $this->events->pub('SOMETHING_HAPPENED');
+        $this->events->pub('I_HAPPENED');
+        $this->events->pub('EVERYTHING_ELSE_HAPPENED');
+        $did_occur_within_last_100 = $this->events->didOccur($events);
+        $did_occur_within_last_2 = $this->events->didOccur($events, 2);
+        $did_occur_within_last_1 = $this->events->didOccur($events, 1);
+        // assert
+        $this->assertTrue($did_occur_within_last_100);
+        $this->assertTrue($did_occur_within_last_2);
+        $this->assertFalse($did_occur_within_last_1);
+    }
+
     private function getLastLine(string $filename)
     {
         $file = file($filename);

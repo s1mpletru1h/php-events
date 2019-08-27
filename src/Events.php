@@ -40,7 +40,9 @@ class Events
         bool $log_to_master = false,
         bool $use_color = true,
         string $log_dir = self::LOG_DIR,
-        bool $show_exception_trace = false)
+        bool $show_exception_trace = false,
+        int  $keep_events = 100,
+        int  $max_hist = 200)
     {
         $this->_thread = $thread;
         $this->_log_level = $log_level;
@@ -53,11 +55,14 @@ class Events
         $this->_show_exception_trace = $show_exception_trace;
         $this->_thread_log = $this->_log_dir.'/'.$thread.'.log';
         $this->_master_log = $this->_log_dir.'/master.log';
+        $this->_keep_events = $keep_events;
+        $this->_max_hist = $max_hist;
 
         $this->_createLogDir();
         $this->_createLogFile($this->_thread_log);
         $this->_createLogFile($this->_master_log);
         $this->_initSubscribers();
+        $this->_initHistory();
     }
 
     /**
@@ -112,6 +117,7 @@ class Events
             {
                 $event_message .= "\n";
             }
+            $this->_logToHistory($event_name, $data, $event_timestamp, $event_thread);
             if ($this->_log_to_stdout) {
                 $this->_logToStdout($event_message, $event_level);
             }
@@ -142,6 +148,49 @@ class Events
         if ($confirm === true)
         {
             $this->_clearAllSubscribers();
+        }
+    }
+
+    /**
+     * Return true if every event in $events did occur within the last $n events.
+     * $n is limited by $this->_keep_events.
+     *
+     * @param  array    $events
+     * @param  int      $n
+     */
+    public function didOccur(array $events, int $n = 100)
+    {
+        $recent_history = array_map(function ($details) use ($n) {
+            return $details['event'];
+        }, array_slice($GLOBALS['EVENT_HIST'], -$n));
+        foreach ($events as $event) {
+            if (!in_array($event, $recent_history))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function _logToHistory(string $event, array $data,
+        string $timestamp, string $thread)
+    {
+        $this->_trimHistory();
+        array_push($GLOBALS['EVENT_HIST'], [
+            'event' => $event,
+            'data' => $data,
+            'timestamp' => $timestamp,
+            'thread' => $thread
+        ]);
+    }
+
+    private function _trimHistory()
+    {
+        $hist_size = sizeof($GLOBALS['EVENT_HIST']);
+        $excess = $hist_size - $this->_keep_events;
+        if ($hist_size > $this->_max_hist)
+        {
+            array_splice($GLOBALS['EVENT_HIST'], 0, $excess);
         }
     }
 
@@ -191,6 +240,14 @@ class Events
         if(!isset($GLOBALS['SUBSCRIBERS']))
         {
             $GLOBALS['SUBSCRIBERS'] = [];
+        }
+    }
+
+    private function _initHistory()
+    {
+        if(!isset($GLOBALS['EVENT_HIST']))
+        {
+            $GLOBALS['EVENT_HIST'] = [];
         }
     }
 
